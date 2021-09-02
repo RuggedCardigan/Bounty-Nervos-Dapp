@@ -9,6 +9,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { PolyjuiceHttpProvider } from '@polyjuice-provider/web3';
 import { AddressTranslator } from 'nervos-godwoken-integration';
 import { BossFightWrapper } from '../lib/contracts/BossFightWrapper';
+import * as CompiledContractArtifact from '../../build/contracts/ERC20.json';
 import { CONFIG } from '../config';
 
 async function createWeb3() {
@@ -43,6 +44,8 @@ export function App() {
     const [contract, setContract] = useState<BossFightWrapper>();
     const [accounts, setAccounts] = useState<string[]>();
     const [l2Balance, setL2Balance] = useState<bigint>();
+    const [ckETHBalance, setCKETHBalance] = useState<number>();
+    const [layer2DepositAddress, setLayer2DepositAddress] = useState<string | undefined>();
     const [existingContractIdInputValue, setExistingContractIdInputValue] = useState<string>();
     const [lives, setLives] = useState<number | undefined>();
     const [bossHealth, setBossHealth] = useState<number | undefined>();
@@ -62,6 +65,12 @@ export function App() {
             setPolyjuiceAddress(undefined);
         }
     }, [accounts?.[0]]);
+
+    useEffect(() => {
+        if (polyjuiceAddress && accounts && web3) {
+            getCKETHBalance();
+        }
+    }, [polyjuiceAddress, accounts, web3]);
 
     useEffect(() => {
         if (transactionInProgress && !toastId.current) {
@@ -84,7 +93,26 @@ export function App() {
         }
     }, [transactionInProgress, toastId.current]);
 
+
+
     const account = accounts?.[0];
+    const ckETHAddress = '0x832630fAa22638694403255a9789aE67ACDFc828';
+
+    async function getCKETHBalance() {
+        const _contractCketh = new web3.eth.Contract(
+            CompiledContractArtifact.abi as any,
+            ckETHAddress
+        );
+        const ckBalance = Number(await _contractCketh.methods.balanceOf(polyjuiceAddress).call({from: accounts?.[0]}));
+        setCKETHBalance(ckBalance);
+    }
+
+    async function reloadBalance() {
+        setCKETHBalance(undefined);
+        const l2Balancewow = BigInt(await web3.eth.getBalance(account));
+        setL2Balance(l2Balancewow);
+        await getCKETHBalance();
+    }
 
     async function deployContract() {
         const _contract = new BossFightWrapper(web3);
@@ -139,6 +167,13 @@ export function App() {
         }
     }
 
+    const getLayer2DepositAddress = async () => {
+        const addressTranslator = new AddressTranslator();
+
+        const _depositAddress = await addressTranslator.getLayer2DepositAddress(web3,accounts?.[0]);
+        setLayer2DepositAddress(_depositAddress.addressString);
+    };
+
     async function setExistingContractAddress(contractAddress: string) {
         const _contract = new BossFightWrapper(web3);
         _contract.useDeployed(contractAddress.trim());
@@ -181,6 +216,12 @@ export function App() {
             if (_accounts && _accounts[0]) {
                 const _l2Balance = BigInt(await _web3.eth.getBalance(_accounts[0]));
                 setL2Balance(_l2Balance);
+                const _contractCketh = new _web3.eth.Contract(
+                    CompiledContractArtifact.abi as any,
+                    ckETHAddress
+            );
+        const ckBalance = Number(await _contractCketh.methods.balanceOf(polyjuiceAddress).call({from: _accounts[0]}));
+        setCKETHBalance(ckBalance);
             }
         })();
     });
@@ -191,6 +232,13 @@ export function App() {
         <div>
             Nervos Layer 2 balance:{' '}
             <b>{l2Balance ? (l2Balance / 10n ** 8n).toString() : <LoadingIndicator />} CKB</b>
+            <br/>
+            <br/>
+            ckETH Balance:
+            <b>{ckETHBalance ? ckETHBalance.toString() : <LoadingIndicator/>} ckETH WEI </b>
+            <br />
+            <br />
+            <button onClick={reloadBalance}>Reload Bal</button>
             <br />
             <br />
             Deployed contract address: <b>{contract?.address || '-'}</b> <br />
@@ -249,6 +297,27 @@ export function App() {
             <br />
             <br />
             Your Polyjuice address: <b>{polyjuiceAddress || ' - '}</b>
+            <br />
+            <br />
+            <button onClick={getLayer2DepositAddress}>Click to get Layer 2 Address</button>
+            <br />
+            <br />
+            {layer2DepositAddress && (
+            <div>
+            {' '}
+            <p>
+            {layer2DepositAddress}
+            </p>
+            <br />
+            <br />
+            Enter your Layer 2 deposit address as the receipient in the link below.
+            <br/>
+            <br/>
+            <button onClick={() => window.open('https://force-bridge-test.ckbapp.dev/bridge/Ethereum/Nervos?xchain-asset=0x0000000000000000000000000000000000000000', '_blank')}>
+            The Force Bridge
+            </button>
+            </div>
+            )}
             <br />
             <br />
             <br />
