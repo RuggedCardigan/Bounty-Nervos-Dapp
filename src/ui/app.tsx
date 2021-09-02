@@ -189,12 +189,6 @@ export function App() {
 
     return (
         <div>
-            Your ETH address: <b>{accounts?.[0]}</b>
-            <br />
-            <br />
-            Your Polyjuice address: <b>{polyjuiceAddress || ' - '}</b>
-            <br />
-            <br />
             Nervos Layer 2 balance:{' '}
             <b>{l2Balance ? (l2Balance / 10n ** 8n).toString() : <LoadingIndicator />} CKB</b>
             <br />
@@ -202,7 +196,6 @@ export function App() {
             Deployed contract address: <b>{contract?.address || '-'}</b> <br />
             Deploy transaction hash: <b>{deployTxHash || '-'}</b>
             <br />
-            <hr />
             <button onClick={deployContract} disabled={!l2Balance}>
                 Deploy contract
             </button>
@@ -250,6 +243,14 @@ export function App() {
             <button onClick={Attack} disabled={!contract}>
                 Attack the Boss!
             </button>
+            <br />
+            <br />
+            Your ETH address: <b>{accounts?.[0]}</b>
+            <br />
+            <br />
+            Your Polyjuice address: <b>{polyjuiceAddress || ' - '}</b>
+            <br />
+            <br />
             <br />
             <br />
             <ToastContainer />
