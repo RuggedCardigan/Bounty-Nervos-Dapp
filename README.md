@@ -1,1 +1,7 @@
-# Bounty-Nervos-Dapp
+# Blockchain workshop
+
+Start UI:
+
+```
+yarn && yarn build && yarn ui
+```
