@@ -1,4 +1,4 @@
-# Blockchain workshop
+# BossFight
 
 Start UI:
 
